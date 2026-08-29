@@ -6,7 +6,6 @@ The main agent prepares the work, calls Fable once for judgment or critique, wai
 
 ## Requirements
 
-- Python 3.10 or newer
 - Claude Code CLI
 - A Claude subscription with Fable access
 
@@ -17,7 +16,7 @@ claude auth login
 claude auth status
 ```
 
-The helper requires `claude.ai` subscription authentication and intentionally rejects API-key authentication.
+The skill requires `claude.ai` subscription authentication and does not use API-key authentication.
 
 ## Install for Codex
 
@@ -29,25 +28,13 @@ git clone https://github.com/mattlgroff/fable-advisor "$HOME\.codex\skills\fable
 
 Restart Codex if the skill does not appear immediately, then invoke it with `$fable-advisor`.
 
-## Direct usage
+## How output is saved
 
-Check authentication without invoking Fable:
+Claude CLI does not provide an output filename flag. The skill runs Claude in print mode with `--output-format text`, then uses the current shell's native redirection to save stdout directly to a task-specific Markdown file. Stderr is redirected to a separate log file.
 
-```powershell
-python scripts/invoke_fable.py --auth-check-only
-```
+The calling agent chooses the prompt, result, and log paths before launch, retains those paths while it waits, and reads the exact result path after Claude exits successfully. No wrapper script or Python runtime is involved.
 
-Run a consultation:
-
-```powershell
-python scripts/invoke_fable.py `
-  --prompt-file consultation.md `
-  --output fable-response.md
-```
-
-The helper uses the `claude` executable available on `PATH` in the current environment. It does not select or configure a separate runtime.
-
-The invocation uses Fable 5 at high effort, does not configure prompt caching or count tokens, does not fall back to another model, and does not impose a timeout. Every call receives a persistent Claude session ID. The Markdown result, stderr log, and metadata are kept together.
+The invocation uses Fable 5 at high effort, does not configure prompt caching or count tokens, does not fall back to another model, and does not impose a timeout. Every call receives a persistent Claude session ID so an interrupted consultation can be resumed only after user authorization.
 
 ## License
 
