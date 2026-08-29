@@ -4,14 +4,11 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
-import os
 from pathlib import Path
-import platform
-import shlex
 import subprocess
 import sys
-from datetime import datetime, timezone
 from uuid import uuid4
 
 
@@ -19,45 +16,35 @@ MODEL = "claude-fable-5"
 EFFORT = "high"
 
 
-def claude_command(distro: str, arguments: list[str]) -> list[str]:
-    if platform.system() == "Windows":
-        return [
-            "wsl.exe",
-            "-d",
-            distro,
-            "--",
-            "bash",
-            "-lc",
-            "exec " + shlex.join(["claude", *arguments]),
-        ]
+def claude_command(arguments: list[str]) -> list[str]:
     return ["claude", *arguments]
 
 
-def auth_status(distro: str) -> dict[str, object]:
-    completed = subprocess.run(
-        claude_command(distro, ["auth", "status"]),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if completed.returncode != 0:
-        raise RuntimeError(
-            "Unable to read Claude authentication status. Run `claude auth login` "
-            "inside the selected environment."
-        )
+def require_subscription_auth() -> None:
     try:
-        return json.loads(completed.stdout)
+        completed = subprocess.run(
+            claude_command(["auth", "status"]),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError(
+            "Claude Code was not found on PATH. Install Claude Code in this environment first."
+        ) from exc
+
+    if completed.returncode != 0:
+        raise RuntimeError("Unable to read Claude authentication status. Run `claude auth login`.")
+
+    try:
+        status = json.loads(completed.stdout)
     except json.JSONDecodeError as exc:
         raise RuntimeError("Claude returned an unreadable authentication status.") from exc
 
-
-def require_subscription_auth(distro: str) -> None:
-    status = auth_status(distro)
     if not status.get("loggedIn") or status.get("authMethod") != "claude.ai":
-        environment = f"WSL distribution {distro}" if platform.system() == "Windows" else "this environment"
         raise RuntimeError(
-            f"Claude subscription authentication is not active in {environment}. "
-            "Run `claude auth login` there. API-key authentication is intentionally rejected."
+            "Claude subscription authentication is not active. Run `claude auth login`. "
+            "API-key authentication is intentionally rejected."
         )
 
 
@@ -89,11 +76,6 @@ def main() -> int:
     parser.add_argument("--output", help="Markdown output path")
     parser.add_argument("--resume", metavar="SESSION_ID", help="Resume a prior Claude session")
     parser.add_argument(
-        "--distro",
-        default=os.environ.get("FABLE_ADVISOR_WSL_DISTRO", "Ubuntu"),
-        help="WSL distribution on Windows (default: Ubuntu)",
-    )
-    parser.add_argument(
         "--auth-check-only",
         action="store_true",
         help="Verify subscription authentication without invoking a model",
@@ -105,7 +87,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    require_subscription_auth(args.distro)
+    require_subscription_auth()
     if args.auth_check_only:
         print("Claude subscription authentication confirmed.")
         return 0
@@ -167,7 +149,7 @@ def main() -> int:
             "w", encoding="utf-8", newline="\n"
         ) as log_file:
             completed = subprocess.run(
-                claude_command(args.distro, common),
+                claude_command(common),
                 input=prompt,
                 stdout=output_file,
                 stderr=log_file,

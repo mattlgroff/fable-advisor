@@ -19,7 +19,7 @@ End the prompt by asking Fable to return only its advisor report in Markdown. Sa
 
 ## Invoke Fable
 
-Run `scripts/invoke_fable.py` from this skill directory. On Windows, it uses the configured WSL distribution, defaulting to `Ubuntu`. On Linux and macOS, it uses the local Claude CLI.
+Run `scripts/invoke_fable.py` from this skill directory. It uses the `claude` executable available in the current environment.
 
 ```text
 python scripts/invoke_fable.py --prompt-file <prompt.md> --output <advisor-result.md>

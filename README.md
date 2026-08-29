@@ -9,9 +9,8 @@ The main agent prepares the work, calls Fable once for judgment or critique, wai
 - Python 3.10 or newer
 - Claude Code CLI
 - A Claude subscription with Fable access
-- On Windows, WSL with Claude Code installed and authenticated
 
-Authenticate inside WSL:
+Authenticate Claude Code in the environment where the skill will run:
 
 ```bash
 claude auth login
@@ -46,7 +45,7 @@ python scripts/invoke_fable.py `
   --output fable-response.md
 ```
 
-On Windows, the helper uses the `Ubuntu` WSL distribution by default. Override it with `--distro` or `FABLE_ADVISOR_WSL_DISTRO`.
+The helper uses the `claude` executable available on `PATH` in the current environment. It does not select or configure a separate runtime.
 
 The invocation uses Fable 5 at high effort, does not configure prompt caching or count tokens, does not fall back to another model, and does not impose a timeout. Every call receives a persistent Claude session ID. The Markdown result, stderr log, and metadata are kept together.
 
