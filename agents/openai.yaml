@@ -3,4 +3,4 @@ interface:
   short_description: "Consult Fable 5 as a high-effort advisor"
   default_prompt: "Use $fable-advisor to ask Fable 5 for a high-effort judgment on this work."
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false
