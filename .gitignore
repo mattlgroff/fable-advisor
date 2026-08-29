@@ -1,0 +1,5 @@
+.fable-advisor/
+*.stderr.log
+*.metadata.json
+__pycache__/
+*.pyc
